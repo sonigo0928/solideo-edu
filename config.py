@@ -3,15 +3,25 @@
 설정 파일 - 시스템 리소스 모니터링 시스템
 """
 
-# 모니터링 설정
-MONITORING_INTERVAL_MS = 1000  # 데이터 수집 간격 (밀리초)
-MONITORING_DURATION_SECONDS = 300  # 5분 = 300초
-MAX_DATA_POINTS = 300  # 최대 데이터 포인트 수
+import os
+import logging
 
-# 서버 설정
-HOST = "127.0.0.1"
-PORT = 8050
-DEBUG = True
+# 로깅 설정
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(asctime)s] %(levelname)s - %(name)s: %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+# 모니터링 설정 (환경변수로 오버라이드 가능)
+MONITORING_INTERVAL_MS = int(os.getenv('MONITORING_INTERVAL_MS', 1000))
+MONITORING_DURATION_SECONDS = int(os.getenv('MONITORING_DURATION_SECONDS', 300))
+MAX_DATA_POINTS = int(os.getenv('MAX_DATA_POINTS', 300))
+
+# 서버 설정 (환경변수로 오버라이드 가능)
+HOST = os.getenv('HOST', '127.0.0.1')
+PORT = int(os.getenv('PORT', 8050))
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
 
 # PDF 보고서 설정
 REPORT_OUTPUT_DIR = "output"

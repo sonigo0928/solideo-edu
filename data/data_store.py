@@ -8,6 +8,9 @@ from typing import Dict, Any, List, Optional
 from collections import deque
 import statistics
 import threading
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class DataStore:
@@ -79,11 +82,29 @@ class DataStore:
     
     def get_statistics(self, key: str) -> Dict[str, Optional[float]]:
         """특정 키의 통계 반환"""
-        data = self.get_data(key)
-        # None 값 필터링
-        valid_data = [x for x in data if x is not None]
-        
-        if not valid_data:
+        try:
+            data = self.get_data(key)
+            # None 값 필터링
+            valid_data = [x for x in data if x is not None]
+
+            if not valid_data:
+                return {
+                    'min': None,
+                    'max': None,
+                    'mean': None,
+                    'stdev': None,
+                    'count': 0,
+                }
+
+            return {
+                'min': round(min(valid_data), 2),
+                'max': round(max(valid_data), 2),
+                'mean': round(statistics.mean(valid_data), 2),
+                'stdev': round(statistics.stdev(valid_data), 2) if len(valid_data) > 1 else 0,
+                'count': len(valid_data),
+            }
+        except Exception as e:
+            logger.error(f"통계 계산 오류 (키: {key}): {e}")
             return {
                 'min': None,
                 'max': None,
@@ -91,14 +112,6 @@ class DataStore:
                 'stdev': None,
                 'count': 0,
             }
-        
-        return {
-            'min': round(min(valid_data), 2),
-            'max': round(max(valid_data), 2),
-            'mean': round(statistics.mean(valid_data), 2),
-            'stdev': round(statistics.stdev(valid_data), 2) if len(valid_data) > 1 else 0,
-            'count': len(valid_data),
-        }
     
     def get_all_statistics(self) -> Dict[str, Dict[str, Optional[float]]]:
         """모든 키의 통계 반환"""

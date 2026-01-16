@@ -5,7 +5,10 @@ CPU 모니터링 모듈
 
 import psutil
 import platform
+import logging
 from typing import Dict, Any, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class CPUMonitor:
@@ -20,7 +23,12 @@ class CPUMonitor:
         try:
             import wmi
             self._wmi = wmi.WMI(namespace="root\\wmi")
-        except Exception:
+            logger.info("WMI를 통한 CPU 온도 모니터링 활성화")
+        except ImportError:
+            logger.warning("WMI 모듈이 설치되어 있지 않습니다. Windows 온도 모니터링이 비활성화됩니다.")
+            self._wmi = None
+        except Exception as e:
+            logger.warning(f"WMI 초기화 실패: {e}. Windows 온도 모니터링이 비활성화됩니다.")
             self._wmi = None
     
     def get_cpu_info(self) -> Dict[str, Any]:
@@ -65,9 +73,9 @@ class CPUMonitor:
                     temp_kelvin = temperature_info[0].CurrentTemperature / 10.0
                     temp_celsius = temp_kelvin - 273.15
                     return round(temp_celsius, 1)
-            except Exception:
-                pass
-        
+            except Exception as e:
+                logger.debug(f"WMI에서 CPU 온도를 가져올 수 없습니다: {e}")
+
         # psutil sensors_temperatures 시도 (Linux 주로 작동)
         try:
             temps = psutil.sensors_temperatures()
@@ -76,9 +84,9 @@ class CPUMonitor:
                     for entry in entries:
                         if 'cpu' in name.lower() or 'core' in entry.label.lower():
                             return entry.current
-        except Exception:
-            pass
-        
+        except Exception as e:
+            logger.debug(f"psutil에서 CPU 온도를 가져올 수 없습니다: {e}")
+
         return None
     
     def get_all_data(self) -> Dict[str, Any]:

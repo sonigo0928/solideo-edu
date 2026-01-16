@@ -3,7 +3,10 @@
 GPU 모니터링 모듈
 """
 
+import logging
 from typing import Dict, Any, List, Optional
+
+logger = logging.getLogger(__name__)
 
 
 class GPUMonitor:
@@ -18,14 +21,16 @@ class GPUMonitor:
         try:
             import GPUtil
             self._gputil_available = True
+            logger.info("GPUtil을 통한 GPU 모니터링 활성화")
         except ImportError:
+            logger.warning("GPUtil이 설치되어 있지 않습니다. GPU 모니터링이 비활성화됩니다.")
             self._gputil_available = False
     
     def get_gpu_info(self) -> List[Dict[str, Any]]:
         """GPU 기본 정보 반환"""
         if not self._gputil_available:
             return []
-        
+
         try:
             import GPUtil
             gpus = GPUtil.getGPUs()
@@ -38,14 +43,15 @@ class GPUMonitor:
                 }
                 for gpu in gpus
             ]
-        except Exception:
+        except Exception as e:
+            logger.error(f"GPU 정보를 가져올 수 없습니다: {e}")
             return []
     
     def get_gpu_usage(self) -> List[Dict[str, Any]]:
         """GPU 사용량 반환"""
         if not self._gputil_available:
             return []
-        
+
         try:
             import GPUtil
             gpus = GPUtil.getGPUs()
@@ -61,7 +67,8 @@ class GPUMonitor:
                 }
                 for gpu in gpus
             ]
-        except Exception:
+        except Exception as e:
+            logger.error(f"GPU 사용량을 가져올 수 없습니다: {e}")
             return []
     
     def get_primary_gpu_data(self) -> Dict[str, Any]:
