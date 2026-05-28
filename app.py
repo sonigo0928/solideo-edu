@@ -14,6 +14,7 @@
 
 import os
 import sys
+import logging
 
 # 현재 디렉토리를 경로에 추가
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -24,6 +25,33 @@ import dash_bootstrap_components as dbc
 from config import HOST, PORT, DEBUG
 from ui.layout import create_layout
 from ui.callbacks import register_callbacks
+
+logger = logging.getLogger(__name__)
+
+
+def check_dependencies():
+    """필수 의존성 확인"""
+    required_modules = [
+        'psutil',
+        'plotly',
+        'dash',
+        'jinja2',
+        'apscheduler',
+    ]
+
+    missing = []
+    for module in required_modules:
+        try:
+            __import__(module)
+        except ImportError:
+            missing.append(module)
+
+    if missing:
+        logger.error(f"다음 필수 모듈이 설치되어 있지 않습니다: {', '.join(missing)}")
+        logger.error("다음 명령으로 설치하세요: pip install -r requirements.txt")
+        sys.exit(1)
+
+    logger.info("모든 필수 의존성이 설치되어 있습니다.")
 
 
 def create_app() -> Dash:
@@ -75,6 +103,9 @@ def create_app() -> Dash:
 
 def main():
     """메인 함수"""
+    # 의존성 확인
+    check_dependencies()
+
     print("=" * 60)
     print("  [*] System Resource Monitor")
     print("  시스템 리소스 모니터링 대시보드")
@@ -91,10 +122,17 @@ def main():
     print("  종료하려면 Ctrl+C를 누르세요.")
     print("=" * 60)
     print()
-    
+
     # 애플리케이션 생성 및 실행
-    app = create_app()
-    app.run(host=HOST, port=PORT, debug=DEBUG)
+    try:
+        app = create_app()
+        app.run(host=HOST, port=PORT, debug=DEBUG)
+    except KeyboardInterrupt:
+        logger.info("애플리케이션이 종료되었습니다.")
+        sys.exit(0)
+    except Exception as e:
+        logger.error(f"애플리케이션 오류: {e}", exc_info=True)
+        sys.exit(1)
 
 
 if __name__ == '__main__':

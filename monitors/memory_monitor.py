@@ -4,7 +4,10 @@
 """
 
 import psutil
+import logging
 from typing import Dict, Any
+
+logger = logging.getLogger(__name__)
 
 
 class MemoryMonitor:
@@ -17,23 +20,37 @@ class MemoryMonitor:
     
     def get_memory_info(self) -> Dict[str, Any]:
         """메모리 정보 반환"""
-        mem = psutil.virtual_memory()
-        swap = psutil.swap_memory()
-        
-        return {
-            # RAM 정보
-            'ram_total': self.bytes_to_gb(mem.total),
-            'ram_available': self.bytes_to_gb(mem.available),
-            'ram_used': self.bytes_to_gb(mem.used),
-            'ram_percent': mem.percent,
-            'ram_free': self.bytes_to_gb(mem.free),
-            
-            # Swap/페이지 파일 정보
-            'swap_total': self.bytes_to_gb(swap.total),
-            'swap_used': self.bytes_to_gb(swap.used),
-            'swap_free': self.bytes_to_gb(swap.free),
-            'swap_percent': swap.percent,
-        }
+        try:
+            mem = psutil.virtual_memory()
+            swap = psutil.swap_memory()
+
+            return {
+                # RAM 정보
+                'ram_total': self.bytes_to_gb(mem.total),
+                'ram_available': self.bytes_to_gb(mem.available),
+                'ram_used': self.bytes_to_gb(mem.used),
+                'ram_percent': mem.percent,
+                'ram_free': self.bytes_to_gb(mem.free),
+
+                # Swap/페이지 파일 정보
+                'swap_total': self.bytes_to_gb(swap.total),
+                'swap_used': self.bytes_to_gb(swap.used),
+                'swap_free': self.bytes_to_gb(swap.free),
+                'swap_percent': swap.percent,
+            }
+        except Exception as e:
+            logger.error(f"메모리 정보를 가져올 수 없습니다: {e}")
+            return {
+                'ram_total': 0,
+                'ram_available': 0,
+                'ram_used': 0,
+                'ram_percent': 0,
+                'ram_free': 0,
+                'swap_total': 0,
+                'swap_used': 0,
+                'swap_free': 0,
+                'swap_percent': 0,
+            }
     
     def get_all_data(self) -> Dict[str, Any]:
         """모든 메모리 데이터 반환"""
